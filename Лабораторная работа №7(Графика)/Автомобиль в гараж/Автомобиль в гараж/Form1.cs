@@ -12,38 +12,60 @@ namespace Автомобиль_в_гараж
 {
     public partial class Form1 : Form
     {
+        Image iCar, background;
+        int xCar = 400, yCar = 250,yGates = 230;
+        Timer timer;
+        bool waiting = false, openGates = false;
+        BufferedGraphicsContext currentContext;
+        BufferedGraphics myBuffer;
+        System.Media.SoundPlayer snd = new System.Media.SoundPlayer();
         public Form1()
         {
             InitializeComponent();
+            snd.SoundLocation = "opengates.wav";
+            snd.Load();
+            iCar = Image.FromFile("car1.png");
+            background = Image.FromFile("background.jpg");
+            timer = new Timer();
+            timer.Interval = 1;
+            timer.Enabled = true;
+            timer.Tick += new EventHandler(timer_Tick);
         }
-        public void CreateGarage()
+        private void timer_Tick(object sender, EventArgs e)
         {
-            Graphics g = pictureBox1.CreateGraphics();
-            SolidBrush garage = new SolidBrush(Color.Gray);
-            SolidBrush gates = new SolidBrush(Color.Black);
-            g.FillRectangle(garage, 10, pictureBox1.Height/2 + 30 , 250, 150);
-            g.FillRectangle(gates, 252, pictureBox1.Height / 2 + 30, 15, 150);
+            currentContext = BufferedGraphicsManager.Current;
+            myBuffer = currentContext.Allocate(this.CreateGraphics(), this.DisplayRectangle);
+            myBuffer.Graphics.DrawImage(background, 0, 0);
+            myBuffer.Graphics.DrawImage(iCar, xCar, yCar);
+            myBuffer.Graphics.FillRectangle(new SolidBrush(Color.DarkGray),30,230,270,120);
+            myBuffer.Graphics.FillRectangle(new SolidBrush(Color.Black), 300, yGates, 20, 120);
+            myBuffer.Render();
+            myBuffer.Render(pictureBox1.CreateGraphics());
+            myBuffer.Dispose();
+
+            if (waiting == false && xCar > 50)
+            {
+                xCar--;
+            }
+            if (xCar == 310)
+            {
+                waiting = true;
+                openGates = true;
+            }
+            if (openGates == true && yGates > 130)
+            {
+                yGates--;
+                if (yGates == 130)
+                {
+                    waiting = false;
+                    openGates = false;
+                    snd.PlayLooping();
+                    snd.Dispose();
+                }
+            }
+            if (xCar <= 60 && yGates <= 230)
+                yGates++;
         }
 
-        public void CreateCar()
-        {
-            Graphics g = pictureBox1.CreateGraphics();
-            SolidBrush car = new SolidBrush(Color.DarkBlue);
-            SolidBrush wheel = new SolidBrush(Color.Black);
-            SolidBrush windows = new SolidBrush(Color.Aqua);
-            Image img = Image.FromFile("car1.bmp");
-            TextureBrush car1 = new TextureBrush(img);
-
-            int xStartCar = pictureBox1.Width/2;
-            int yStartCar = pictureBox1.Height/2;
-            g.FillPolygon(car1, new PointF[] { new PointF ( xStartCar, yStartCar ), new PointF (xStartCar + 20,yStartCar), new PointF(xStartCar+40, yStartCar-30),
-                new PointF(xStartCar+120, yStartCar-30), new PointF(xStartCar+120, yStartCar+30),new PointF ( xStartCar, yStartCar+30 ), });
-        }
-
-        private void pictureBox1_Click(object sender, EventArgs e)
-        {
-            CreateGarage();
-            CreateCar();
-        }
     }
 }
